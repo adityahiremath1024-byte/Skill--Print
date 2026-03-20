@@ -129,6 +129,14 @@ export default function App() {
   const [error, setError] = useState('');
   const [unlockClicked, setUnlockClicked] = useState(false);
 
+  // Upload step state
+  const [uploadMode, setUploadMode] = useState('pdf'); // 'pdf' | 'jd'
+  const [jdText, setJdText] = useState('');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef(null);
+
   const messages = [
     'Mapping your skill constellation...',
     'Cross-referencing 14M+ professional profiles...',
@@ -138,6 +146,50 @@ export default function App() {
     'Generating your SkillPrint DNA...',
   ];
 
+  /* ── Parse Resume / JD ── */
+  const handleParse = async () => {
+    setUploading(true);
+    setUploadError('');
+    try {
+      let body;
+      if (uploadMode === 'pdf' && uploadFile) {
+        const arrayBuffer = await uploadFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const pdfBase64 = btoa(binary);
+        body = { pdfBase64, mimeType: uploadFile.type || 'application/pdf' };
+      } else if (uploadMode === 'jd' && jdText.trim()) {
+        body = { jdText };
+      } else {
+        setUploadError('Please upload a PDF or paste job description text.');
+        setUploading(false);
+        return;
+      }
+
+      const res = await fetch('/api/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Parse failed');
+
+      if (data.skills?.length) setSkills(data.skills.slice(0, 10));
+      if (data.experience) setExperience(data.experience);
+      if (data.education) setEducation(data.education);
+      if (data.interests?.length) setInterests(data.interests.slice(0, 6));
+      if (data.country) setCountry(data.country);
+      setStep('skills');
+    } catch (e) {
+      setUploadError(e.message || 'Could not extract skills. Please fill in manually.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /* ── Analyze ── */
   const analyze = async () => {
     setStep('analyzing');
     setProgress(0);
@@ -177,6 +229,7 @@ export default function App() {
   const label = { fontSize: 13, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8, display: 'block', fontWeight: 600 };
   const input = { width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '12px 16px', color: '#e0f0f4', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
   const stepBadge = { fontSize: 11, color: '#00e5ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 20, fontWeight: 600 };
+  const tabBtn = (active) => ({ flex: 1, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', background: active ? 'rgba(0,229,255,0.15)' : 'transparent', color: active ? '#00e5ff' : 'rgba(255,255,255,0.4)', borderBottom: active ? '2px solid #00e5ff' : '2px solid transparent' });
 
   const shareText = result ? `🧬 My SkillPrint: "${result.title}" — Rarity: ${result.rarityScore}/100 (${result.rarityRatio}). Discover yours:` : '';
 
@@ -204,9 +257,63 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 28, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
                 <span>🔬 Rarity Index</span><span>💡 Hidden Powers</span><span>💰 Income Paths</span>
               </div>
-              <button onClick={() => setStep('skills')} style={btn}>Decode My SkillPrint →</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <button onClick={() => setStep('upload')} style={btn}>📄 Upload Resume / JD →</button>
+                <button onClick={() => setStep('skills')} style={{ ...btnGhost, fontSize: 14, padding: '12px 24px' }}>✍️ Enter Skills Manually</button>
+              </div>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 16 }}>Takes 60 seconds · 100% free</p>
             </div>
+          </div>
+        )}
+
+        {/* STEP 0: UPLOAD */}
+        {step === 'upload' && (
+          <div style={card}>
+            <div style={stepBadge}>Auto-Extract Skills</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>Upload your resume or job description</h2>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginBottom: 24 }}>AI will extract your skills, experience & education automatically.</p>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 4 }}>
+              <button style={tabBtn(uploadMode === 'pdf')} onClick={() => setUploadMode('pdf')}>📄 Resume PDF</button>
+              <button style={tabBtn(uploadMode === 'jd')} onClick={() => setUploadMode('jd')}>📋 Job Description</button>
+            </div>
+
+            {uploadMode === 'pdf' ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{ border: '2px dashed rgba(0,229,255,0.25)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', cursor: 'pointer', background: uploadFile ? 'rgba(0,229,255,0.05)' : 'transparent', transition: 'all 0.2s' }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 10 }}>{uploadFile ? '✅' : '📁'}</div>
+                <p style={{ color: uploadFile ? '#69f0ae' : 'rgba(255,255,255,0.5)', fontSize: 14, margin: 0, fontWeight: uploadFile ? 600 : 400 }}>
+                  {uploadFile ? uploadFile.name : 'Click to upload PDF resume'}
+                </p>
+                {!uploadFile && <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, margin: '6px 0 0' }}>Supports .pdf files up to 10MB</p>}
+                <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" style={{ display: 'none' }} onChange={e => setUploadFile(e.target.files[0] || null)} />
+              </div>
+            ) : (
+              <div>
+                <label style={label}>Paste Job Description</label>
+                <textarea value={jdText} onChange={e => setJdText(e.target.value)} rows={7} placeholder="Paste the full job description here — AI will extract required skills and role details..."
+                  style={{ ...input, resize: 'vertical', lineHeight: 1.6 }} />
+              </div>
+            )}
+
+            {uploadError && <p style={{ color: '#ff6090', fontSize: 13, marginTop: 12 }}>{uploadError}</p>}
+
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <button onClick={() => setStep('intro')} style={btnGhost}>← Back</button>
+              <button
+                onClick={handleParse}
+                disabled={uploading || (uploadMode === 'pdf' ? !uploadFile : !jdText.trim())}
+                style={{ ...btn, opacity: uploading || (uploadMode === 'pdf' ? !uploadFile : !jdText.trim()) ? 0.5 : 1, flex: 1 }}
+              >
+                {uploading ? '⏳ Extracting...' : '✨ Extract Skills →'}
+              </button>
+            </div>
+            <p style={{ textAlign: 'center', marginTop: 12 }}>
+              <span onClick={() => setStep('skills')} style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', cursor: 'pointer', textDecoration: 'underline' }}>Skip — enter skills manually instead</span>
+            </p>
           </div>
         )}
 
@@ -298,7 +405,6 @@ export default function App() {
         {/* RESULTS */}
         {step === 'results' && result && (
           <div style={{ maxWidth: 620, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-            {/* Header card */}
             <div style={{ ...card, textAlign: 'center', maxWidth: '100%', marginBottom: 16, background: 'linear-gradient(145deg,rgba(13,22,42,0.9),rgba(20,10,40,0.8))', borderColor: 'rgba(124,77,255,0.2)' }}>
               <div style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: '#7c4dff', marginBottom: 16, fontWeight: 600 }}>Your SkillPrint DNA</div>
               <DnaCanvas />
@@ -311,7 +417,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Radar + Intersections */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
               <div style={{ ...card, maxWidth: '100%', padding: '24px 16px', textAlign: 'center' }}>
                 <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12, fontWeight: 600 }}>Skill Dimensions</div>
@@ -329,13 +434,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Hidden Superpower */}
             <div style={{ ...card, maxWidth: '100%', marginBottom: 16, padding: 24, background: 'linear-gradient(135deg,rgba(0,229,255,0.06),rgba(124,77,255,0.06))' }}>
               <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#ffd740', marginBottom: 10, fontWeight: 600 }}>⚡ Hidden Superpower</div>
               <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: 'rgba(255,255,255,0.75)' }}>{result.hiddenSuperpower}</p>
             </div>
 
-            {/* Monetization Paths */}
             <div style={{ ...card, maxWidth: '100%', marginBottom: 16, padding: 24 }}>
               <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#69f0ae', marginBottom: 16, fontWeight: 600 }}>💰 Monetization Paths</div>
               {result.monetizationPaths.map((m, i) => (
@@ -346,13 +449,11 @@ export default function App() {
               ))}
             </div>
 
-            {/* 7-Day Challenge */}
             <div style={{ ...card, maxWidth: '100%', marginBottom: 16, padding: 24, border: '1px solid rgba(255,96,144,0.2)' }}>
               <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#ff6090', marginBottom: 10, fontWeight: 600 }}>🚀 Your 7-Day Challenge</div>
               <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: 'rgba(255,255,255,0.75)' }}>{result.oneWeekChallenge}</p>
             </div>
 
-            {/* Unlock Full Report */}
             <div style={{ ...card, maxWidth: '100%', textAlign: 'center', padding: 32, background: 'linear-gradient(145deg,rgba(124,77,255,0.12),rgba(255,96,144,0.08))', border: '1px solid rgba(124,77,255,0.25)', marginBottom: 16 }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>🔓 Want the Full Report?</h3>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>30-day monetization roadmap, skill gap analysis, curated job matches, and shareable SkillPrint card.</p>
@@ -360,12 +461,11 @@ export default function App() {
               {unlockClicked && <p style={{ fontSize: 12, color: '#ffd740', marginTop: 12 }}>💡 Coming soon! Share your SkillPrint to get early access.</p>}
             </div>
 
-            {/* Share buttons */}
             <div style={{ display: 'flex', gap: 12, marginTop: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => navigator.clipboard.writeText(shareText)} style={{ ...btn, fontSize: 13, padding: '12px 24px' }}>📋 Copy</button>
-              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText + ' https://skillprint-ai.vercel.app')}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, fontSize: 13, padding: '12px 24px', textDecoration: 'none', background: 'linear-gradient(135deg,#1da1f2,#0d8bd9)' }}>Share on 𝕏</a>
-              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://skillprint-ai.vercel.app')}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, fontSize: 13, padding: '12px 24px', textDecoration: 'none', background: 'linear-gradient(135deg,#0077b5,#005f8d)' }}>LinkedIn</a>
-              <button onClick={() => { setStep('intro'); setSkills([]); setExperience(''); setEducation(''); setCountry(''); setInterests([]); setResult(null); }} style={{ ...btnGhost, fontSize: 13, padding: '12px 24px' }}>↻ Restart</button>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText + ' https://skill-print-lbei.vercel.app')}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, fontSize: 13, padding: '12px 24px', textDecoration: 'none', background: 'linear-gradient(135deg,#1da1f2,#0d8bd9)' }}>Share on 𝕏</a>
+              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://skill-print-lbei.vercel.app')}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, fontSize: 13, padding: '12px 24px', textDecoration: 'none', background: 'linear-gradient(135deg,#0077b5,#005f8d)' }}>LinkedIn</a>
+              <button onClick={() => { setStep('intro'); setSkills([]); setExperience(''); setEducation(''); setCountry(''); setInterests([]); setResult(null); setUploadFile(null); setJdText(''); }} style={{ ...btnGhost, fontSize: 13, padding: '12px 24px' }}>↻ Restart</button>
             </div>
           </div>
         )}
