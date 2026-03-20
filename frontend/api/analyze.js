@@ -1,16 +1,10 @@
-export default async function handler(req, res) {
-  // CORS headers
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { skills = [], experience = '', education = '', interests = [], country = '' } = req.body;
 
@@ -47,81 +41,46 @@ Generate a personalized SkillPrint DNA report. Respond with ONLY a valid JSON ob
     {"label": "Communication", "value": 70}
   ],
   "topIntersections": [
-    {
-      "combo": "Skill A × Skill B",
-      "insight": "One sentence why this combo is powerful",
-      "rarity": "1 in 5,000 pros"
-    },
-    {
-      "combo": "Skill B × Skill C",
-      "insight": "One sentence why this combo is valuable",
-      "rarity": "1 in 3,200 pros"
-    },
-    {
-      "combo": "Skill A × Skill C × Interest",
-      "insight": "One sentence about this triple intersection",
-      "rarity": "1 in 12,000 pros"
-    }
+    {"combo": "Skill A × Skill B", "insight": "Why this combo is powerful", "rarity": "1 in 5,000 pros"},
+    {"combo": "Skill B × Skill C", "insight": "Why this combo is valuable", "rarity": "1 in 3,200 pros"},
+    {"combo": "Skill A × Skill C × Interest", "insight": "About this triple intersection", "rarity": "1 in 12,000 pros"}
   ],
-  "hiddenSuperpower": "2-3 sentences about their hidden competitive advantage that most people overlook",
+  "hiddenSuperpower": "2-3 sentences about their hidden competitive advantage",
   "monetizationPaths": [
-    {
-      "path": "Specific Income Path Name",
-      "potential": "$X–$Xk/mo",
-      "timeToRevenue": "2–4 weeks"
-    },
-    {
-      "path": "Another Specific Path",
-      "potential": "$X–$Xk/mo",
-      "timeToRevenue": "1–3 months"
-    },
-    {
-      "path": "Third Path",
-      "potential": "$X–$Xk project",
-      "timeToRevenue": "1 month"
-    }
+    {"path": "Specific Income Path", "potential": "$X–$Xk/mo", "timeToRevenue": "2–4 weeks"},
+    {"path": "Another Path", "potential": "$X–$Xk/mo", "timeToRevenue": "1–3 months"},
+    {"path": "Third Path", "potential": "$X–$Xk project", "timeToRevenue": "1 month"}
   ],
-  "oneWeekChallenge": "A specific, actionable 7-day challenge tailored to their exact skill combination to start generating income or opportunities"
+  "oneWeekChallenge": "A specific actionable 7-day challenge tailored to their exact skill combination"
 }
 
-Make all values specific to their actual skills. Rarity scores should feel authentic (not all above 90). Use their country context for monetization amounts if relevant.`;
+Make all values specific to their actual skills. Use their country context for monetization amounts.`;
 
   try {
-    const geminiRes = await fetch(
+    const res2 = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.85,
-            topP: 0.95,
-            maxOutputTokens: 1500,
-          },
+          generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 1500 },
         }),
       }
     );
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error('Gemini API error:', errText);
+    if (!res2.ok) {
+      const errText = await res2.text();
+      console.error('Gemini error:', errText);
       return res.status(502).json({ error: 'AI service error. Please try again.' });
     }
 
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data = await res2.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) return res.status(502).json({ error: 'Empty response from AI.' });
 
-    if (!rawText) {
-      return res.status(502).json({ error: 'Empty response from AI.' });
-    }
-
-    // Extract JSON from the response (strip any markdown fences if present)
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in response:', rawText);
-      return res.status(502).json({ error: 'Could not parse AI response.' });
-    }
+    if (!jsonMatch) return res.status(502).json({ error: 'Could not parse AI response.' });
 
     const result = JSON.parse(jsonMatch[0]);
     return res.status(200).json(result);
@@ -129,4 +88,4 @@ Make all values specific to their actual skills. Rarity scores should feel authe
     console.error('analyze error:', err);
     return res.status(500).json({ error: 'Internal server error.' });
   }
-}
+};
