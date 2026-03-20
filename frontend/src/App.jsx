@@ -324,7 +324,7 @@ export default function App() {
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>What are your skills?</h2>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginBottom: 24 }}>Technical skills, soft skills, languages, tools — anything you're good at.</p>
             <label style={label}>Your Skills (add 3–10)</label>
-            <TagInput tags={skills} setTags={setSkills} placeholder="e.g., Python, Public Speaking, Urdu..." maxTags={10} />
+            <TagInput tags={skills} setTags={setSkills} placeholder="e.g., Python, Public Speaking, English..." maxTags={10} />
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
               <button onClick={() => setStep('intro')} style={btnGhost}>← Back</button>
               <button onClick={() => skills.length >= 3 && setStep('experience')} style={{ ...btn, opacity: skills.length >= 3 ? 1 : 0.4 }}>Next →</button>
