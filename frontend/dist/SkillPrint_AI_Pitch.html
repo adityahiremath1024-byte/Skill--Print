@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillPrint AI — Hackathon Pitch Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    @page { margin: 0.6in 0.7in; size: A4; }
+    @media print {
+      body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .page-break { break-before: page; }
+      .no-print { display: none; }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #fff;
+    }
+
+    /* ─── Print Button ─── */
+    .print-btn {
+      position: fixed; top: 16px; right: 16px; z-index: 999;
+      padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+      background: linear-gradient(135deg, #00f5d4, #22c55e); color: #06090f;
+      box-shadow: 0 4px 20px rgba(0,245,212,0.3);
+    }
+    .print-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(0,245,212,0.4); }
+
+    /* ─── Cover ─── */
+    .cover {
+      background: linear-gradient(135deg, #06090f 0%, #0c1019 50%, #111827 100%);
+      color: #f9fafb; padding: 60px 50px; min-height: 100vh; display: flex;
+      flex-direction: column; justify-content: center; position: relative; overflow: hidden;
+    }
+    .cover::before {
+      content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px;
+      border-radius: 50%; background: radial-gradient(ellipse, rgba(0,245,212,0.08), transparent 70%);
+      filter: blur(60px);
+    }
+    .cover::after {
+      content: ''; position: absolute; bottom: -80px; left: -80px; width: 400px; height: 400px;
+      border-radius: 50%; background: radial-gradient(ellipse, rgba(167,139,250,0.06), transparent 70%);
+      filter: blur(50px);
+    }
+    .cover .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; position: relative; z-index: 1; }
+    .cover .logo-box {
+      width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #00f5d4, #22c55e); color: #06090f;
+      font-family: 'Space Grotesk'; font-size: 14px; font-weight: 700;
+    }
+    .cover .logo span { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 500; }
+    .cover .logo span em { font-style: normal; color: #00f5d4; }
+    .cover h1 {
+      font-family: 'Space Grotesk'; font-size: 48px; font-weight: 600; line-height: 1.1;
+      letter-spacing: -0.02em; margin-bottom: 16px; position: relative; z-index: 1;
+    }
+    .cover h1 .accent { color: #00f5d4; }
+    .cover .subtitle {
+      font-size: 16px; color: #9ca3af; max-width: 500px; margin-bottom: 40px;
+      position: relative; z-index: 1;
+    }
+    .cover .stats {
+      display: flex; gap: 32px; position: relative; z-index: 1;
+    }
+    .cover .stat { text-align: center; }
+    .cover .stat-value {
+      font-family: 'Space Grotesk'; font-size: 28px; font-weight: 600; color: #00f5d4;
+    }
+    .cover .stat-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; }
+    .cover .meta {
+      position: absolute; bottom: 40px; left: 50px; right: 50px; display: flex;
+      justify-content: space-between; font-size: 10px; color: #374151;
+      font-family: 'JetBrains Mono'; z-index: 1;
+    }
+
+    /* ─── Section Styles ─── */
+    .section { padding: 32px 50px; }
+    .section-dark { background: #f8fafc; }
+    .section-title {
+      font-family: 'Space Grotesk'; font-size: 22px; font-weight: 600; color: #1a1a2e;
+      margin-bottom: 4px; letter-spacing: -0.01em;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono'; font-size: 9px; color: #00b4a0;
+      text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;
+    }
+    .section-desc { color: #4b5563; font-size: 12px; margin-bottom: 16px; max-width: 600px; }
+
+    /* ─── Grid ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+
+    /* ─── Card ─── */
+    .card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px;
+    }
+    .card-dark {
+      background: #111827; border: 1px solid #1c2333; border-radius: 10px; padding: 14px; color: #d1d5db;
+    }
+    .card h3 { font-family: 'Space Grotesk'; font-size: 13px; font-weight: 500; color: #1a1a2e; margin-bottom: 4px; }
+    .card-dark h3 { color: #f9fafb; }
+    .card p, .card-dark p { font-size: 10px; color: #6b7280; line-height: 1.5; }
+
+    /* ─── Feature Card ─── */
+    .feature-card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px;
+      border-left: 3px solid #00f5d4;
+    }
+    .feature-card h3 { font-family: 'Space Grotesk'; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .feature-card p { font-size: 10px; color: #6b7280; }
+
+    /* ─── Tech Badge ─── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 9px;
+      font-family: 'JetBrains Mono'; letter-spacing: 0; margin: 2px;
+    }
+    .badge-primary { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .badge-secondary { background: #ede9fe; color: #7c3aed; border: 1px solid #c4b5fd; }
+    .badge-accent { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; }
+    .badge-dark { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    /* ─── Table ─── */
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th { font-family: 'JetBrains Mono'; font-size: 8px; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; text-align: left; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+
+    /* ─── Flow ─── */
+    .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .flow-step {
+      background: #111827; color: #f9fafb; border-radius: 8px; padding: 8px 14px;
+      font-family: 'Space Grotesk'; font-size: 11px; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .flow-step .num {
+      font-size: 8px; color: #00f5d4; font-family: 'JetBrains Mono';
+    }
+    .flow-arrow { color: #d1d5db; font-size: 14px; }
+
+    /* ─── Code Block ─── */
+    .code-block {
+      background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px 16px;
+      font-family: 'JetBrains Mono'; font-size: 9px; line-height: 1.7; overflow-x: auto;
+    }
+    .code-block .comment { color: #4ade80; }
+    .code-block .keyword { color: #f472b6; }
+    .code-block .string { color: #fbbf24; }
+
+    /* ─── Divider ─── */
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+
+    /* ─── Number highlight ─── */
+    .big-num {
+      font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700;
+      background: linear-gradient(135deg, #00f5d4, #22c55e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .highlight { background: linear-gradient(135deg, #ecfdf5, #ede9fe); border-radius: 8px; padding: 12px 16px; }
+  </style>
+</head>
+<body>
+
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+  <!-- ═══ COVER ═══ -->
+  <div class="cover">
+    <div class="logo">
+      <div class="logo-box">SP</div>
+      <span>Skill<em>Print</em></span>
+    </div>
+    <h1>AI-Powered Skill<br /><span class="accent">Gap Analysis</span><br />Engine</h1>
+    <p class="subtitle">
+      Upload a resume. Paste a job description. Get a Bayesian-calibrated skill profile
+      with adaptive diagnostics, temporal decay modeling, and a personalized learning roadmap.
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="stat-value">5</div><div class="stat-label">Analysis Layers</div></div>
+      <div class="stat"><div class="stat-value">BKT</div><div class="stat-label">Bayesian tracing</div></div>
+      <div class="stat"><div class="stat-value">e⁻λt</div><div class="stat-label">Decay Modeling</div></div>
+      <div class="stat"><div class="stat-value">DAG</div><div class="stat-label">Learning Path</div></div>
+      <div class="stat"><div class="stat-value">PDF</div><div class="stat-label">Report Export</div></div>
+    </div>
+    <div class="meta">
+      <span>Hackathon 2026</span>
+      <span>Built with React · FastAPI · Claude Sonnet 4 · D3.js · Chart.js</span>
+    </div>
+  </div>
+
+  <!-- ═══ PROBLEM ═══ -->
+  <div class="section page-break">
+    <p class="section-label">The Problem</p>
+    <p class="section-title" style="margin-bottom: 12px;">Resumes lie. Skill assessments don't adapt.</p>
+    <div class="grid-2">
+      <div>
+        <p style="font-size: 12px; color: #374151; margin-bottom: 12px;">
+          Traditional hiring tools rely on keyword matching — they can't tell if a candidate
+          <em>actually</em> knows Python or just listed it on their resume 5 years ago.
+          Skills decay over time, but no tool accounts for this.
+        </p>
+        <p style="font-size: 12px; color: #374151; margin-bottom: 12px;">
+          Existing skill assessment platforms ask the same questions regardless of your level.
+          They waste your time on things you already know and miss the gaps that matter.
+        </p>
+        <div class="highlight" style="margin-top: 12px;">
+          <p style="font-size: 11px; font-weight: 500; color: #1a1a2e;">SkillPrint AI solves this by combining:</p>
+          <p style="font-size: 10px; color: #374151;">
+            ✦ Exponential temporal decay modeling (skills fade over time)<br />
+            ✦ Bayesian Knowledge Tracing (adaptive mastery estimation)<br />
+            ✦ Claude Sonnet 4 adaptive questioning (difficulty adjusts in real-time)<br />
+            ✦ Personalized learning DAG with course recommendations
+          </p>
+        </div>
+      </div>
+      <div>
+        <div class="card-dark" style="margin-bottom: 10px;">
+          <h3>❌ Traditional Approach</h3>
+          <p>Keyword matching → Static tests → Generic advice</p>
+          <p style="margin-top: 6px; font-size: 9px; color: #ef4444;">No decay modeling · No adaption · No learning path</p>
+        </div>
+        <div class="card-dark" style="border-color: #00f5d4;">
+          <h3 style="color: #00f5d4;">✅ SkillPrint AI Approach</h3>
+          <p>Resume parsing → Decay modeling → Adaptive BKT diagnostics → Personalized DAG</p>
+          <p style="margin-top: 6px; font-size: 9px; color: #00f5d4;">Real proficiency · Adversarial probing · Course recommendations</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HOW IT WORKS ═══ -->
+  <div class="section section-dark">
+    <p class="section-label">How It Works</p>
+    <p class="section-title" style="margin-bottom: 16px;">Five-Layer Analysis Pipeline</p>
+    <div class="grid-5">
+      <div class="card" style="text-align: center;">
+        <div style="font-family: 'Space Grotesk'; font-size: 24px; font-weight: 300; color: #00f5d4; opacity: 0.4;">01</div>
+        <h3>Extract</h3>
+        <p>AI parses resume + JD. Maps every skill with confidence scores and timestamps.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-family: 'Space Grotesk'; font-size: 24px; font-weight: 300; color: #f59e0b; opacity: 0.4;">02</div>
+        <h3>Decay</h3>
+        <p>Exponential decay: C<sub>decayed</sub> = C<sub>raw</sub> × e<sup>−λt</sup>. λ=0.15, t=years since last use.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-family: 'Space Grotesk'; font-size: 24px; font-weight: 300; color: #a78bfa; opacity: 0.4;">03</div>
+        <h3>Diagnose</h3>
+        <p>Claude Sonnet 4 generates adversarial questions. Difficulty adapts to your level in real-time.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-family: 'Space Grotesk'; font-size: 24px; font-weight: 300; color: #ef4444; opacity: 0.4;">04</div>
+        <h3>Trace</h3>
+        <p>BKT updates mastery after each answer: P(M|correct) = P(M)×(1−P<sub>slip</sub>) / P(correct).</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-family: 'Space Grotesk'; font-size: 24px; font-weight: 300; color: #22c55e; opacity: 0.4;">05</div>
+        <h3>Path</h3>
+        <p>Personalized DAG maps optimal learning route. Course recommendations with time estimates.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FEATURES ═══ -->
+  <div class="section page-break">
+    <p class="section-label">Key Features</p>
+    <p class="section-title" style="margin-bottom: 16px;">What Makes SkillPrint AI Different</p>
+    <div class="grid-2" style="gap: 10px;">
+      <div class="feature-card">
+        <h3>📊 Temporal Decay Modeling</h3>
+        <p>Skills erode without practice. Our exponential decay model (λ=0.15) recalculates real proficiency based on years since last use. A Python skill from 4 years ago is worth 45% less.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🧠 Bayesian Knowledge Tracing</h3>
+        <p>4-parameter BKT model (P(L₀), P(T), P(S), P(G)) updates mastery probability after each diagnostic answer, giving a statistically calibrated estimate of true knowledge depth.</p>
+      </div>
+      <div class="feature-card">
+        <h3>💬 Claude Sonnet 4 Adaptive Q&A</h3>
+        <p>No generic quizzes. Claude generates adversarial, skill-specific questions that probe edge cases. If you claim Python expertise, it asks about metaclasses, not print statements.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🕸️ Learning Path DAG</h3>
+        <p>D3.js force-directed graph with prerequisite edges. Click any node to see gap details, reasoning, and curated course links from Coursera, Udemy, and Fast.ai.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📋 Learning Roadmap & Courses</h3>
+        <p>Priority-ordered skill improvement list with progress bars, estimated hours, and specific online course recommendations. Toggle between graph and roadmap views.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📥 Downloadable Report</h3>
+        <p>Export your complete analysis as a formatted report: match score, skill breakdown, diagnostic log, BKT transitions, and recommended focus areas with time estimates.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🧪 Real-World Sandbox</h3>
+        <p>Realistic scenario-based evaluation. Claude evaluates your approach to an actual engineering problem and provides scores, strengths, and specific improvement areas.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📈 Visual Radar Analysis</h3>
+        <p>Chart.js radar plot overlays your mastery against job requirements. Instantly see where gaps exist with color-coded severity badges (critical, high, medium, low).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <div class="section section-dark">
+    <p class="section-label">Technology Stack</p>
+    <p class="section-title" style="margin-bottom: 16px;">Built With Modern, Production-Ready Tools</p>
+    <div class="grid-2">
+      <div>
+        <table>
+          <tr><th style="width: 100px;">Layer</th><th>Technology</th><th>Why</th></tr>
+          <tr><td style="font-weight: 500;">Frontend</td><td><span class="badge badge-primary">React 18</span> <span class="badge badge-primary">Vite</span></td><td>Fast HMR, component-based UI</td></tr>
+          <tr><td style="font-weight: 500;">Styling</td><td><span class="badge badge-primary">TailwindCSS 4</span></td><td>Utility-first, designed system</td></tr>
+          <tr><td style="font-weight: 500;">State</td><td><span class="badge badge-primary">Zustand</span></td><td>Lighweight, no boilerplate</td></tr>
+          <tr><td style="font-weight: 500;">Charts</td><td><span class="badge badge-primary">Chart.js</span> <span class="badge badge-primary">D3.js</span></td><td>Radar charts + force graph</td></tr>
+          <tr><td style="font-weight: 500;">Animation</td><td><span class="badge badge-primary">Framer Motion</span></td><td>Physics-based animations</td></tr>
+          <tr><td style="font-weight: 500;">Backend</td><td><span class="badge badge-secondary">FastAPI</span> <span class="badge badge-secondary">Python</span></td><td>Async, typed, fast</td></tr>
+          <tr><td style="font-weight: 500;">AI Engine</td><td><span class="badge badge-accent">Claude Sonnet 4</span></td><td>Adversarial questioning, evaluation</td></tr>
+          <tr><td style="font-weight: 500;">PDF Parse</td><td><span class="badge badge-secondary">PyMuPDF</span></td><td>Resume extraction</td></tr>
+          <tr><td style="font-weight: 500;">Deploy</td><td><span class="badge badge-dark">Vercel</span> <span class="badge badge-dark">Render</span></td><td>Zero-config, global CDN</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="code-block">
+          <span class="comment"># Temporal Decay Model</span><br />
+          <span class="keyword">def</span> apply_decay(confidence, years_since):<br />
+          &nbsp;&nbsp;<span class="keyword">lambda_</span> = <span class="string">0.15</span><br />
+          &nbsp;&nbsp;<span class="keyword">return</span> confidence * exp(-lambda_ * years_since)<br /><br />
+          <span class="comment"># Bayesian Knowledge Tracing</span><br />
+          <span class="keyword">def</span> bkt_update(prior, correct, p_slip, p_guess):<br />
+          &nbsp;&nbsp;<span class="keyword">if</span> correct:<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;p_correct = prior * (<span class="string">1</span> - p_slip) + (<span class="string">1</span> - prior) * p_guess<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;posterior = prior * (<span class="string">1</span> - p_slip) / p_correct<br />
+          &nbsp;&nbsp;<span class="keyword">else</span>:<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;p_wrong = prior * p_slip + (<span class="string">1</span> - prior) * (<span class="string">1</span> - p_guess)<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;posterior = prior * p_slip / p_wrong<br />
+          &nbsp;&nbsp;<span class="keyword">return</span> posterior
+        </div>
+        <div style="margin-top: 10px;">
+          <p class="section-label" style="margin-bottom: 4px;">Deployment Architecture</p>
+          <div class="flow">
+            <div class="flow-step"><span class="num">1</span> GitHub Repo</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="num">2</span> /frontend → Vercel</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="num">3</span> /backend → Render</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGES ═══ -->
+  <div class="section page-break">
+    <p class="section-label">Application Pages</p>
+    <p class="section-title" style="margin-bottom: 16px;">5 Purpose-Built Pages</p>
+    <div class="grid-2" style="gap: 10px;">
+      <div class="card">
+        <h3>🏠 Landing Page</h3>
+        <p><strong>Input:</strong> Resume PDF upload + Job Description paste</p>
+        <p><strong>Output:</strong> Parsed skills with confidence scores + temporal decay applied</p>
+        <p><strong>Design:</strong> Asymmetric hero, cycling typewriter, morphing blob, 5-step process cards, algorithm formulas, tech marquee</p>
+      </div>
+      <div class="card">
+        <h3>💬 Diagnostic Page</h3>
+        <p><strong>Input:</strong> User answers to adaptive questions</p>
+        <p><strong>Output:</strong> BKT-calibrated mastery probabilities per skill</p>
+        <p><strong>Design:</strong> Split layout — skill sidebar with decay bars + chat interface with BKT toast notifications</p>
+      </div>
+      <div class="card">
+        <h3>📊 Results Page</h3>
+        <p><strong>Input:</strong> All analysis data (parse + BKT + decay)</p>
+        <p><strong>Output:</strong> 5-metric dashboard, radar chart, key findings, skill-by-skill breakdown, downloadable report</p>
+        <p><strong>Design:</strong> Metric cards, asymmetric radar + analysis, color-coded gap badges</p>
+      </div>
+      <div class="card">
+        <h3>🕸️ Learning Path Page</h3>
+        <p><strong>Input:</strong> Gap analysis + skill prerequisites</p>
+        <p><strong>Output:</strong> Interactive D3 DAG + priority-ordered roadmap with course recommendations</p>
+        <p><strong>Design:</strong> Zoomable/draggable graph, node inspector drawer, roadmap toggle with curated courses</p>
+      </div>
+      <div class="card" style="grid-column: span 2;">
+        <h3>🧪 Sandbox Page</h3>
+        <p><strong>Input:</strong> User's approach to a realistic engineering scenario</p>
+        <p><strong>Output:</strong> Claude-evaluated score, strengths, improvement areas, streaming feedback</p>
+        <p><strong>Design:</strong> 2-column layout — scenario + response on left, score ring + assessment on right</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ USER FLOW ═══ -->
+  <div class="section section-dark">
+    <p class="section-label">User Flow</p>
+    <p class="section-title" style="margin-bottom: 16px;">From Upload to Actionable Insights</p>
+    <div class="flow" style="justify-content: center; gap: 6px;">
+      <div class="flow-step"><span class="num">01</span> Upload Resume</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">02</span> Paste JD</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">03</span> AI Parses</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">04</span> Decay Applied</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">05</span> Diagnostic Q&A</div>
+    </div>
+    <div class="flow" style="justify-content: center; gap: 6px; margin-top: 10px;">
+      <div class="flow-step"><span class="num">06</span> BKT Calibrates</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">07</span> Results + Radar</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">08</span> Download Report</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">09</span> Learning Path</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step"><span class="num">10</span> Sandbox Eval</div>
+    </div>
+  </div>
+
+  <!-- ═══ WHY WE WIN ═══ -->
+  <div class="section page-break">
+    <p class="section-label">Why We Win</p>
+    <p class="section-title" style="margin-bottom: 16px;">Competitive Differentiators</p>
+    <div class="grid-3">
+      <div class="card" style="text-align: center;">
+        <div class="big-num">e⁻λt</div>
+        <h3>Temporal Decay</h3>
+        <p>No other tool accounts for skill degradation over time. Our exponential model gives accurate current proficiency.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="big-num">BKT</div>
+        <h3>Bayesian Tracing</h3>
+        <p>Statistical mastery estimation, not multiple-choice quizzes. Every answer updates your probability model.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="big-num">DAG</div>
+        <h3>Learning Graph</h3>
+        <p>Not a flat list — a directed acyclic graph with prerequisite edges and curated course recommendations.</p>
+      </div>
+    </div>
+
+    <hr />
+
+    <p class="section-label">Innovation Summary</p>
+    <table>
+      <tr><th>Feature</th><th>Traditional Tools</th><th>SkillPrint AI</th></tr>
+      <tr><td>Skill Assessment</td><td>Keyword matching</td><td style="color: #059669; font-weight: 500;">AI parsing + temporal decay</td></tr>
+      <tr><td>Diagnostics</td><td>Static multiple-choice</td><td style="color: #059669; font-weight: 500;">Claude Sonnet 4 adaptive questioning</td></tr>
+      <tr><td>Mastery Estimation</td><td>Pass/fail score</td><td style="color: #059669; font-weight: 500;">4-parameter BKT probability</td></tr>
+      <tr><td>Skill Decay</td><td>Not considered</td><td style="color: #059669; font-weight: 500;">Exponential decay (λ=0.15)</td></tr>
+      <tr><td>Learning Path</td><td>Generic course list</td><td style="color: #059669; font-weight: 500;">Personalized DAG with prerequisites</td></tr>
+      <tr><td>Report</td><td>Basic PDF</td><td style="color: #059669; font-weight: 500;">Detailed analysis with BKT log + recommendations</td></tr>
+      <tr><td>Practical Eval</td><td>None</td><td style="color: #059669; font-weight: 500;">Real-world scenario sandbox</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="section" style="background: #06090f; color: #6b7280; text-align: center; padding: 30px 50px;">
+    <div style="font-family: 'Space Grotesk'; font-size: 18px; color: #f9fafb; font-weight: 500; margin-bottom: 6px;">
+      Skill<span style="color: #00f5d4;">Print</span> AI
+    </div>
+    <p style="font-size: 10px;">Hackathon 2026 · AI-Powered Skill Gap Analysis Engine</p>
+    <p style="font-size: 9px; margin-top: 8px; font-family: 'JetBrains Mono'; color: #374151;">
+      React · FastAPI · Claude Sonnet 4 · D3.js · Chart.js · Zustand · Framer Motion · PyMuPDF · Vercel · Render
+    </p>
+  </div>
+
+</body>
+</html>
