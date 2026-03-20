@@ -1,3 +1,5 @@
+const https = require('https');
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -6,7 +8,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { skills = [], experience = '', education = '', interests = [], country = '' } = req.body;
+  const { skills = [], experience = '', education = '', interests = [], country = '' } = req.body || {};
 
   if (!skills.length || skills.length < 2) {
     return res.status(400).json({ error: 'At least 2 skills are required.' });
@@ -14,23 +16,22 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured.' });
+    return res.status(500).json({ error: 'API key not configured on server.' });
   }
 
   const prompt = `You are a world-class career analyst specializing in rare skill combinations.
 
-Analyze this person's professional profile:
+Analyze this professional profile:
 - Skills: ${skills.join(', ')}
 - Experience: ${experience || 'Not specified'}
 - Education: ${education || 'Not specified'}
 - Interests: ${interests.join(', ') || 'Not specified'}
 - Country: ${country || 'Not specified'}
 
-Generate a personalized SkillPrint DNA report. Respond with ONLY a valid JSON object (no markdown, no explanation) in this EXACT format:
-
+Respond with ONLY a valid JSON object (no markdown, no code fences) in this format:
 {
-  "title": "A creative 4-6 word title for their unique skill archetype (e.g. 'The Ethical AI Architect')",
-  "tagline": "One sentence that captures their unique value proposition",
+  "title": "4-6 word creative archetype title",
+  "tagline": "One sentence unique value proposition",
   "rarityScore": 87,
   "rarityRatio": "1 in 8,400",
   "radarData": [
@@ -41,51 +42,81 @@ Generate a personalized SkillPrint DNA report. Respond with ONLY a valid JSON ob
     {"label": "Communication", "value": 70}
   ],
   "topIntersections": [
-    {"combo": "Skill A × Skill B", "insight": "Why this combo is powerful", "rarity": "1 in 5,000 pros"},
-    {"combo": "Skill B × Skill C", "insight": "Why this combo is valuable", "rarity": "1 in 3,200 pros"},
-    {"combo": "Skill A × Skill C × Interest", "insight": "About this triple intersection", "rarity": "1 in 12,000 pros"}
+    {"combo": "Skill A × Skill B", "insight": "Why powerful", "rarity": "1 in 5,000 pros"},
+    {"combo": "Skill B × Skill C", "insight": "Why valuable", "rarity": "1 in 3,200 pros"},
+    {"combo": "Skill A × Interest", "insight": "Triple value", "rarity": "1 in 12,000 pros"}
   ],
-  "hiddenSuperpower": "2-3 sentences about their hidden competitive advantage",
+  "hiddenSuperpower": "2-3 sentences about hidden competitive advantage",
   "monetizationPaths": [
-    {"path": "Specific Income Path", "potential": "$X–$Xk/mo", "timeToRevenue": "2–4 weeks"},
-    {"path": "Another Path", "potential": "$X–$Xk/mo", "timeToRevenue": "1–3 months"},
-    {"path": "Third Path", "potential": "$X–$Xk project", "timeToRevenue": "1 month"}
+    {"path": "Income path 1", "potential": "$2–$5k/mo", "timeToRevenue": "2–4 weeks"},
+    {"path": "Income path 2", "potential": "$3–$8k/mo", "timeToRevenue": "1–3 months"},
+    {"path": "Income path 3", "potential": "$5k project", "timeToRevenue": "1 month"}
   ],
-  "oneWeekChallenge": "A specific actionable 7-day challenge tailored to their exact skill combination"
-}
+  "oneWeekChallenge": "Specific 7-day actionable challenge for their skill combo"
+}`;
 
-Make all values specific to their actual skills. Use their country context for monetization amounts.`;
+  const payload = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 1500 },
+  });
 
-  try {
-    const res2 = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 1500 },
-        }),
-      }
-    );
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'generativelanguage.googleapis.com',
+      path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    };
 
-    if (!res2.ok) {
-      const errText = await res2.text();
-      console.error('Gemini error:', errText);
-      return res.status(502).json({ error: 'AI service error. Please try again.' });
-    }
+    const req2 = https.request(options, (res2) => {
+      let data = '';
+      res2.on('data', chunk => { data += chunk; });
+      res2.on('end', () => {
+        try {
+          if (res2.statusCode !== 200) {
+            console.error('Gemini error status:', res2.statusCode, data);
+            res.status(502).json({ error: 'AI service error: ' + res2.statusCode });
+            return resolve();
+          }
+          const parsed = JSON.parse(data);
+          const rawText = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!rawText) {
+            res.status(502).json({ error: 'Empty AI response.' });
+            return resolve();
+          }
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            console.error('No JSON in response:', rawText);
+            res.status(502).json({ error: 'Could not parse AI response.' });
+            return resolve();
+          }
+          const result = JSON.parse(jsonMatch[0]);
+          res.status(200).json(result);
+          resolve();
+        } catch (err) {
+          console.error('Parse error:', err, data);
+          res.status(500).json({ error: 'Failed to parse response.' });
+          resolve();
+        }
+      });
+    });
 
-    const data = await res2.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) return res.status(502).json({ error: 'Empty response from AI.' });
+    req2.on('error', (err) => {
+      console.error('HTTPS error:', err);
+      res.status(500).json({ error: 'Network error calling AI service.' });
+      resolve();
+    });
 
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return res.status(502).json({ error: 'Could not parse AI response.' });
+    req2.setTimeout(9000, () => {
+      req2.destroy();
+      res.status(504).json({ error: 'AI request timed out. Please try again.' });
+      resolve();
+    });
 
-    const result = JSON.parse(jsonMatch[0]);
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error('analyze error:', err);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
+    req2.write(payload);
+    req2.end();
+  });
 };
