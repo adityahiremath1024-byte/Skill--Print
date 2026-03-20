@@ -363,7 +363,7 @@ export default function App() {
               </div>
               <div>
                 <label style={label}>Country</label>
-                <input value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g., Pakistan" style={input} />
+                <input value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g., India" style={input} />
               </div>
             </div>
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
@@ -470,7 +470,7 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: 48, fontSize: 11, color: 'rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>Built by Muhammad Inzamam Khan · Powered by AI</div>
+        <div style={{ textAlign: 'center', marginTop: 48, fontSize: 11, color: 'rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>Built by Aditya M H · Powered by AI</div>
       </div>
     </div>
   );
