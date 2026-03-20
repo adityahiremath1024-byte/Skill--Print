@@ -470,7 +470,7 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: 48, fontSize: 11, color: 'rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>Built by Aditya M H · Powered by AI</div>
+        <div style={{ textAlign: 'center', marginTop: 48, fontSize: 11, color: 'rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>Built by Aditya M Hiremath · Powered by AI</div>
       </div>
     </div>
   );
